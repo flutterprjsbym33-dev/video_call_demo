@@ -23,7 +23,6 @@ class CallScreen extends StatelessWidget {
                 discrip: "Something went wrong",
                 type: SnackBarType.Error);
           }
-
         },
         builder: (context, state) {
           if (state.status == CallState.joined) {

@@ -1,11 +1,20 @@
 # daily_call_app
 
-A new Flutter project where user can use url to 
-comminucate trhough video call.
+## Features
+- Join call via Daily room URL
+- Video grid layout
+- Active speaker highlighting
+- Meeting timeline tracking
+- Bloc state management
 
-Steps:
-1.Paste Url
-2.Tap on Join call
+## Setup
+1. Clone repo
+2. Run `flutter pub get`
+3. Run app
+
+## Notes
+- Requires a valid Daily room URL
+- Live multi-user testing requires Daily account with payment method
 
 
 ## Getting Started
