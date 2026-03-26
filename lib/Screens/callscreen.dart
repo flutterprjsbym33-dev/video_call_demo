@@ -43,7 +43,7 @@ class _CallScreenState extends State<CallScreen> {
         );
       }
     } else if (hasPermissions && mounted) {
-      // Optional: show that permissions are already granted
+
       ShowSnacBar(
         context: context,
         discrip: "Camera and microphone permissions are already granted.",

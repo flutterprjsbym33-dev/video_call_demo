@@ -7,14 +7,14 @@ class CallRoomState {
   final ParticipantId? activeSpeakerId;
   final List<String> timeline;
   final String? errMsg;
-  // ← add this
+
 
   CallRoomState({
     this.status = CallState.initialized,
     this.participants = const {},
     this.activeSpeakerId,
     this.timeline = const [],
-    this.errMsg// ← add this
+    this.errMsg
   });
 
   CallRoomState copyWith({
@@ -23,13 +23,13 @@ class CallRoomState {
     ParticipantId? activeSpeakerId,
     List<String>? timeline,
     CallClient? client,
-    String? errMsg,// ← add this
+    String? errMsg,
   }) => CallRoomState(
     status: status ?? this.status,
     participants: participants ?? this.participants,
     activeSpeakerId: activeSpeakerId ?? this.activeSpeakerId,
     timeline: timeline ?? this.timeline,
      errMsg: errMsg ?? this.errMsg
-     // ← add this
+
   );
 }
