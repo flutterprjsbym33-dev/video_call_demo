@@ -20,6 +20,7 @@ dependencies:
   daily_flutter: ^0.37.0  # Use the latest version
   intl: ^0.19.0
   cherry_toast: ^1.13.0
+  permission_handler: ^11.0.0
 
 dev_dependencies:
   flutter_test:

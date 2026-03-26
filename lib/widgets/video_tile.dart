@@ -26,11 +26,16 @@ class _VideoTileState extends State<VideoTile> {
 
   @override
   void didUpdateWidget(VideoTile oldWidget) {
+
     super.didUpdateWidget(oldWidget);
-    // Update track if participant media changed
-    if (oldWidget.participant.media?.camera.track !=
-        widget.participant.media?.camera.track) {
-      _controller.setTrack(widget.participant.media?.camera.track);
+
+    // Get the new track
+    final newTrack = widget.participant.media?.camera.track;
+    final oldTrack = oldWidget.participant.media?.camera.track;
+
+    // If the track reference changed, update the controller
+    if (newTrack != oldTrack) {
+      _controller.setTrack(newTrack);
     }
   }
 

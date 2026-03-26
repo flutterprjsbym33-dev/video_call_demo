@@ -6,11 +6,59 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../call_manager_bloc/call_events.dart';
 import '../call_manager_bloc/call_manager_bloc.dart';
 import '../call_manager_bloc/call_states.dart';
+import '../utils/permisson_service.dart';
 import '../widgets/video_tile.dart';
 
-class CallScreen extends StatelessWidget {
+class CallScreen extends StatefulWidget {
+  @override
+  _CallScreenState createState() => _CallScreenState();
+}
+
+
+class _CallScreenState extends State<CallScreen> {
   final TextEditingController _urlController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+
+
+
+  Future<void> _checkAndRequestPermissions() async {
+
+    bool hasPermissions = await PermissionService.checkPermissions();
+
+    if (!hasPermissions && mounted) {
+
+      bool permissionsGranted = await PermissionService.requestPermissions();
+
+      if (!permissionsGranted && mounted) {
+        ShowSnacBar(
+          context: context,
+          discrip: "Camera and microphone permissions are required for calls",
+          type: SnackBarType.Error,
+        );
+      } else if (permissionsGranted && mounted) {
+        ShowSnacBar(
+          context: context,
+          discrip: "Permissions granted! You can now join calls.",
+          type: SnackBarType.Success,
+        );
+      }
+    } else if (hasPermissions && mounted) {
+      // Optional: show that permissions are already granted
+      ShowSnacBar(
+        context: context,
+        discrip: "Camera and microphone permissions are already granted.",
+        type: SnackBarType.Success,
+      );
+    }
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _checkAndRequestPermissions();
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +68,7 @@ class CallScreen extends StatelessWidget {
         listener: (context,state){
           if(state.errMsg!=null) {
             return ShowSnacBar(context: context,
-                discrip: "Something went wrong",
+                discrip: state.errMsg!,
                 type: SnackBarType.Error);
           }
         },
@@ -29,21 +77,57 @@ class CallScreen extends StatelessWidget {
             return Stack(
               children: [
                 Positioned.fill(
-                  child: GridView.count(
-                    crossAxisCount: 2,
-                    padding: const EdgeInsets.all(8),
-                    children: state.participants.values
-                        .map((p) => VideoTile(
-                      participant: p,
-                      isActiveSpeaker: p.id == state.activeSpeakerId,
-                    ))
-                        .toList(),
+                  child: Stack(
+                    children: [
+                      Builder(
+                        builder: (context) {
+                          final participants = state.participants.values.toList();
+
+                          if (participants.isEmpty) {
+                            return const Center(child: Text("No participants"));
+                          }
+
+                          final local = participants.firstWhere(
+                                (p) => p.info.isLocal,
+                            orElse: () => participants.first,
+                          );
+
+                          final remoteList =
+                          participants.where((p) => !p.info.isLocal).toList();
+
+                          final remote =
+                          remoteList.isNotEmpty ? remoteList.first : local;
+
+                          return Stack(
+                            children: [
+                              Positioned.fill(
+                                child: VideoTile(
+                                  participant: remote,
+                                  isActiveSpeaker:
+                                  remote.id == state.activeSpeakerId,
+                                ),
+                              ),
+                              Positioned(
+                                bottom: 80,
+                                right: 10,
+                                width: 120,
+                                height: 180,
+                                child: VideoTile(
+                                  participant: local,
+                                  isActiveSpeaker:
+                                  local.id == state.activeSpeakerId,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ),
 
-                // Optional: Timeline overlay at top
                 Positioned(
-                  top: 16,
+                  bottom: 100,
                   left: 16,
                   right: 16,
                   child: Container(
@@ -64,19 +148,26 @@ class CallScreen extends StatelessWidget {
                   ),
                 ),
 
-                // Leave button overlay at bottom
+
+
+
+
+
+
                 Positioned(
                   bottom: 16,
-                  left: 16,
-                  right: 16,
-                  child: ElevatedButton(
-                    onPressed: () =>
-                        context.read<CallBloc>().add(LeaveRequested()),
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red, minimumSize: Size.fromHeight(50)),
-                    child: const Text("Leave Call"),
+                  left: 120,
+                  right: 120,
+                  child:
+                     ElevatedButton(
+                      onPressed: () =>
+                          context.read<CallBloc>().add(LeaveRequested()),
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red, minimumSize: Size.fromHeight(50)),
+                      child: const Icon(Icons.call_end),
+                    ),
                   ),
-                ),
+
               ],
             );
           }

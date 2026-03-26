@@ -24,6 +24,13 @@ class CallBloc extends Bloc<CallEvent, CallRoomState> {
       ));
     });
 
+    on<ChangeSpeaker>((event, emit) {
+      emit(state.copyWith(activeSpeakerId: event.p.id));
+
+    });
+
+    on<MakeTimeLineEmpty>((event,emit)=>emit(state.copyWith(timeline: [])));
+
     on<_UpdateParticipants>((event, emit) {
       emit(state.copyWith(
         status: _client.callState,
@@ -52,8 +59,16 @@ class CallBloc extends Bloc<CallEvent, CallRoomState> {
     });
 
     on<LeaveRequested>((event, emit) async {
+
       await _client.leave();
-      _addLog("Left call");
+      emit(state.copyWith(
+        timeline: [],
+        participants: {},
+        activeSpeakerId: null,
+        status: CallState.initialized,
+      ));
+
+
     });
 
     _setup();
@@ -70,7 +85,11 @@ class CallBloc extends Bloc<CallEvent, CallRoomState> {
     _client.events.listen((event) {
       event.whenOrNull(
         callStateUpdated: (state) {
-          _addLog("Call State: ${state.state}");
+          if (state.state == CallState.left) {
+            _addLog("Call ended");
+          } else {
+            _addLog("Call State: ${state.state}");
+          }
           add(_UpdateParticipants());
         },
         participantJoined: (p) {
@@ -81,8 +100,14 @@ class CallBloc extends Bloc<CallEvent, CallRoomState> {
           _addLog("Participant left: ${p.info.username}");
           add(_UpdateParticipants());
         },
+        participantUpdated: (p) {
+          add(_UpdateParticipants());
+        },
         activeSpeakerChanged: (p) {
-          emit(this.state.copyWith(activeSpeakerId: p?.id));
+          if(p!=null) {
+            add(ChangeSpeaker(p: p));
+            _addLog("Active Speaker: ${p.info.username}");
+          }
         },
         error: (error) => _addLog("Error: $error"),
       );
