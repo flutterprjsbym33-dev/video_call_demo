@@ -1,4 +1,8 @@
 import 'package:daily_call_app/utils/snackbar.dart';
+import 'package:daily_call_app/widgets/call_end_button.dart';
+import 'package:daily_call_app/widgets/join_button.dart';
+import 'package:daily_call_app/widgets/show_call_logs.dart';
+import 'package:daily_call_app/widgets/url_textfield.dart';
 import 'package:daily_flutter/daily_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -17,7 +21,7 @@ class CallScreen extends StatefulWidget {
 
 class _CallScreenState extends State<CallScreen> {
   final TextEditingController _urlController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
+
 
 
 
@@ -54,147 +58,115 @@ class _CallScreenState extends State<CallScreen> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     _checkAndRequestPermissions();
 
   }
 
   @override
+  void dispose() {
+    super.dispose();
+    _urlController.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Daily Demo"),centerTitle: true,),
+      appBar: AppBar(
+        title: const Text("Daily Demo"),
+        centerTitle: true,
+      ),
       body: BlocConsumer<CallBloc, CallRoomState>(
-        listener: (context,state){
-          if(state.errMsg!=null) {
-            return ShowSnacBar(context: context,
-                discrip: state.errMsg!,
-                type: SnackBarType.Error);
+        listener: (context, state) {
+          if (state.errMsg != null) {
+            debugPrint(state.errMsg);
+            ShowSnacBar(
+              context: context,
+              discrip: "Something went wrong",
+              type: SnackBarType.Error,
+            );
           }
         },
         builder: (context, state) {
+          // ================= JOINED SCREEN =================
           if (state.status == CallState.joined) {
+            final participants = state.participants.values.toList();
+
+            if (participants.isEmpty) {
+              return const Center(child: Text("No participants"));
+            }
+
+            final local = participants.firstWhere(
+                  (p) => p.info.isLocal,
+              orElse: () => participants.first,
+            );
+
+            final remoteList =
+            participants.where((p) => !p.info.isLocal).toList();
+
+            final remote =
+            remoteList.isNotEmpty ? remoteList.first : local;
+
             return Stack(
               children: [
+                // Remote video (full screen)
                 Positioned.fill(
-                  child: Stack(
-                    children: [
-                      Builder(
-                        builder: (context) {
-                          final participants = state.participants.values.toList();
-
-                          if (participants.isEmpty) {
-                            return const Center(child: Text("No participants"));
-                          }
-
-                          final local = participants.firstWhere(
-                                (p) => p.info.isLocal,
-                            orElse: () => participants.first,
-                          );
-
-                          final remoteList =
-                          participants.where((p) => !p.info.isLocal).toList();
-
-                          final remote =
-                          remoteList.isNotEmpty ? remoteList.first : local;
-
-                          return Stack(
-                            children: [
-                              Positioned.fill(
-                                child: VideoTile(
-                                  participant: remote,
-                                  isActiveSpeaker:
-                                  remote.id == state.activeSpeakerId,
-                                ),
-                              ),
-                              Positioned(
-                                bottom: 80,
-                                right: 10,
-                                width: 120,
-                                height: 180,
-                                child: VideoTile(
-                                  participant: local,
-                                  isActiveSpeaker:
-                                  local.id == state.activeSpeakerId,
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                    ],
+                  child: VideoTile(
+                    participant: remote,
+                    isActiveSpeaker:
+                    remote.id == state.activeSpeakerId,
                   ),
                 ),
 
+                // Local video (small preview)
+                Positioned(
+                  bottom: 80,
+                  right: 10,
+                  width: 120,
+                  height: 180,
+                  child: VideoTile(
+                    participant: local,
+                    isActiveSpeaker:
+                    local.id == state.activeSpeakerId,
+                  ),
+                ),
+
+                // Call Logs
                 Positioned(
                   bottom: 100,
                   left: 16,
                   right: 16,
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.black54,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: state.timeline
-                          .map((t) => Text(t,
-                        style: const TextStyle(
-                            fontSize: 12, color: Colors.white),
-                      ))
-                          .toList(),
-                    ),
-                  ),
+                  child: ShowCallLogs(timeLine: state.timeline),
                 ),
 
-
-
-
-
-
-
+                // End Call Button
                 Positioned(
                   bottom: 16,
                   left: 120,
                   right: 120,
-                  child:
-                     ElevatedButton(
-                      onPressed: () =>
-                          context.read<CallBloc>().add(LeaveRequested()),
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red, minimumSize: Size.fromHeight(50)),
-                      child: const Icon(Icons.call_end),
-                    ),
+                  child: CallEndButton(
+                    onTap: () {
+                      context.read<CallBloc>().add(LeaveRequested());
+                    },
                   ),
-
+                ),
               ],
             );
           }
 
-          // JOIN SCREEN
+          // ================= JOIN SCREEN =================
           return Padding(
             padding: const EdgeInsets.all(20.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                TextFormField(
-                  controller: _urlController,
-                  decoration:
-                  InputDecoration(labelText: "Daily Room URL",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15)
-                  )),
-                ),
+                UrlTextfield(urlController: _urlController),
                 const SizedBox(height: 20),
-                 ElevatedButton(
-                   style: ElevatedButton.styleFrom(
-                     backgroundColor: Colors.green,
-                     shape: RoundedRectangleBorder(
-                       borderRadius: BorderRadius.circular(15)
-                     )
-                   ),
-                  onPressed: () {
+
+                JoinButton(
+                  onTap: state.status == CallState.joining
+                      ? (){}
+                      : () {
                     if (_urlController.text.isEmpty) {
                       ShowSnacBar(
                         context: context,
@@ -203,13 +175,15 @@ class _CallScreenState extends State<CallScreen> {
                       );
                       return;
                     }
+
                     context.read<CallBloc>().add(
                       JoinRequested(_urlController.text),
                     );
                   },
-                  child: state.status == CallState.joining
-                      ?Text("Joining....") : Text('Join Call',style: TextStyle(color: Colors.white),),
-                 ),
+                  hint: state.status == CallState.joining
+                      ? "Joining"
+                      : "Join",
+                ),
               ],
             ),
           );

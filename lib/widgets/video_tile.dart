@@ -26,13 +26,10 @@ class _VideoTileState extends State<VideoTile> {
 
   @override
   void didUpdateWidget(VideoTile oldWidget) {
-
     super.didUpdateWidget(oldWidget);
-
 
     final newTrack = widget.participant.media?.camera.track;
     final oldTrack = oldWidget.participant.media?.camera.track;
-
 
     if (newTrack != oldTrack) {
       _controller.setTrack(newTrack);
@@ -54,7 +51,9 @@ class _VideoTileState extends State<VideoTile> {
       decoration: BoxDecoration(
         color: Colors.black87,
         border: Border.all(
-          color: widget.isActiveSpeaker ? Colors.greenAccent : Colors.transparent,
+          color: widget.isActiveSpeaker
+              ? Colors.greenAccent
+              : Colors.transparent,
           width: 4,
         ),
         borderRadius: BorderRadius.circular(12),
@@ -64,6 +63,8 @@ class _VideoTileState extends State<VideoTile> {
         child: Stack(
           children: [
             VideoView(controller: _controller),
+
+            // Username label
             Positioned(
               bottom: 8,
               left: 8,
@@ -71,19 +72,26 @@ class _VideoTileState extends State<VideoTile> {
                 '${widget.participant.info.username ?? 'Unknown'}'
                     '${widget.participant.info.isLocal ? ' (You)' : ''}',
                 style: const TextStyle(
-                    color: Colors.white, backgroundColor: Colors.black54),
-              ),
-            ),
-            if (!_micOn)
-              const Positioned(
-                top: 8,
-                right: 8,
-                child: CircleAvatar(
-                  radius: 13,
+                  color: Colors.white,
                   backgroundColor: Colors.black54,
-                  child: Icon(Icons.mic_off, size: 14, color: Colors.redAccent),
                 ),
               ),
+            ),
+
+            // Microphone / Active Speaker indicator
+            Positioned(
+              top: 8,
+              right: 8,
+              child: CircleAvatar(
+                radius: 13,
+                backgroundColor: Colors.black54,
+                child: Icon(
+                  widget.isActiveSpeaker ? Icons.mic : Icons.mic_off,
+                  size: 14,
+                  color: Colors.redAccent,
+                ),
+              ),
+            ),
           ],
         ),
       ),
