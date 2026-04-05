@@ -1,3 +1,4 @@
+import 'package:daily_call_app/utils/extensions.dart';
 import 'package:daily_call_app/utils/snackbar.dart';
 import 'package:daily_call_app/widgets/call_end_button.dart';
 import 'package:daily_call_app/widgets/join_button.dart';
@@ -167,7 +168,18 @@ class _CallScreenState extends State<CallScreen> {
                   onTap: state.status == CallState.joining
                       ? (){}
                       : () {
+
+                    //For checking url is empty
                     if (_urlController.text.isEmpty) {
+                      ShowSnacBar(
+                        context: context,
+                        discrip: "URL cannot be empty",
+                        type: SnackBarType.Error,
+                      );
+                      return;
+                    }
+                    //For checking url is valid or not
+                    if (_urlController.text.isUrl) {
                       ShowSnacBar(
                         context: context,
                         discrip: "URL cannot be empty",
